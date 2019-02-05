@@ -65,7 +65,7 @@ Labs and presentation of the [Computer Vision 1](http://coursecatalogue.uva.nl/x
   <i>T-SNE Visualizations of CNN model features</i>
 </p>
 
---
+---
 
 ### Dependencies
 - Matlab 2017a
@@ -104,7 +104,7 @@ Feature Matching             |  Point-View Matrices
   <i> Reconstruction using Poisson with texture </i>
 </p>
 
---
+---
 
 ### Dependencies
 To run each file, take a look at following files:
@@ -113,7 +113,7 @@ To run each file, take a look at following files:
 - [Instructions](computer-vision-2/assignments/assignment_2/src/README.md) for Lab 2. 
 - Preparation section in [Problem statement](computer-vision-2/assignments/assignment_3/lab3.pdf) for Lab 3.
 
---
+---
 
 ### Paper Presentation
 
