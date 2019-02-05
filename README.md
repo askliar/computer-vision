@@ -119,10 +119,7 @@ To run each file, take a look at following files:
 
 Paper [Learning to Reason: End-to-End Module Networks for Visual Question Answering](https://arxiv.org/abs/1704.05526) by Hu et al. is trying to tackle problem of question answering. As questions are inherently compositional, authors argue that they can be answered easier if decomposed into modular sub-problems. They propose End-to-End Module Networks, which learn to reason by directly predicting instance-specific network layouts without the aid of a parser.
 
-Slides created as part of the course can be found [here](computer-vision-2/presentation/Learning_to_Reason__End_to_End_Module.pdf).
-
-
-
+Slides presenting paper can be found [here](computer-vision-2/presentation/Learning_to_Reason__End_to_End_Module.pdf).
 
 ## Copyright
 
