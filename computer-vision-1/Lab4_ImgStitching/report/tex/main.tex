@@ -1,0 +1,169 @@
+\documentclass{article}
+\usepackage{amsmath}
+% if you need to pass options to natbib, use, e.g.:
+% \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading nips_2017
+%
+% to avoid loading the natbib package, add option nonatbib:
+% \usepackage[nonatbib]{nips_2017}
+
+%\usepackage{nips_2017}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+\usepackage[final]{nips_2017}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{subfig}
+\usepackage{cleveref}
+\usepackage{graphicx}
+\usepackage{siunitx}
+
+\graphicspath{ {hw4/imgs/} }
+
+\title{Computer Vision 1: Image Alignment and Stitching}
+
+
+\author{
+	Gabriele Bani \\
+	11640758 \\
+  \texttt{gabriele.bani@student.uva.nl} \\
+  %% examples of more authors
+  \And
+  	Andrii Skliar \\
+  11636785 \\
+  \texttt{andrii.skliar@student.uva.nl} \\
+}
+
+\begin{document}
+\maketitle
+\section*{Introduction}
+
+In this homework we explore algorithms for keypoint matching using SIFT keypoints and image affine transformation and stitching using RANSAC.
+
+\section{Image Alignment}
+We have visualized keypoint matching and image transformation for all possible combinations of images and you can see results in \cref{fig:boat_matching}, \cref{fig:bus_matching}, \cref{fig:boat_transformation} and \cref{fig:bus_transformation}. 
+
+If we just do a transformation and round coordinates (which corresponds to nearest neighbor interpolation), we get a lot of black pixels, which means, that color values for them are missing. To solve that issue, we have used the following technique for interpolation: for every such pixel, we find the mean of the colors in the window of 5x5 with that pixel in the center and replace it with the mean value. This is similar to just using median filter of size 5x5 on those pixel.
+
+\begin{enumerate}
+    \item How many matches do we need to solve an affine transformation?\\
+    
+    The least amount is 3 matches, because system has 6 unknown variable and that would make sense that having 3 samples, we have 6 known variables to solve system of equations. However, in general, minimum number of points depends on the model, that we are trying to approximate. If it is linear, two points will be enough (because you only need 2 points to define a line), while for circle you would need 3 points (because you only need three points to define a circle) and for homography you need at least 4 points. In our case, we constrain homography to affine homography, thus, we only need 3 points.\\
+    
+    However, that would not give us least squares solution (because our system is not overdetermined) and that might lead to overfitting. Overfitting for the given algorithm happens in a following way: let's say, that we could find parameters with which we get all three points to be inliers in the first iteration. In that case, even if we find better transformation, we will never change our solution and that means, that better solution (with lower error in general), will be skipped. That can be solved by either lowering the error threshold or increasing number of matches. However, too many matches would also result into system not being able to find a suitable transformation and that should be taken into account when choosing the number of samples. In our case, we fixed it to 7 and that number seems to work very well for us.
+    \newpage
+    
+    \item How many iterations in average are needed to find good transformation parameters?\\
+    
+    There is generally no exact answer to that, but there is a way to estimate expected number of iterations. It is done using a following formula: $N = \frac{log(1-p)}{log(1-w^n)}$, where $p$ is the confidence level, $w$ is the probability of a random data point to be an inlier, $n$ is the number of samples used to estimate the model. In our case, $w = 0.5$, $p = 0.99$.
+    \end{enumerate}
+
+\begin{figure}[h]
+  \caption{Results for keypoint matching for boat images with random subset of 50 points plotted}
+  \centering
+    \includegraphics[width=0.9\textwidth]{boat_keypoint_matching.jpg}
+  \label{fig:boat_matching}
+\end{figure}
+
+\begin{figure}[h]
+  \caption{Results for keypoint matching for bus images with random subset of 50 points plotted}
+  \centering
+    \includegraphics[width=0.9\textwidth]{bus_keypoint_matching.jpg}
+  \label{fig:bus_matching}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \caption{Original and transformed boat images}
+    \subfloat[Left part of the image]{{
+    	\includegraphics[width=0.5\textwidth]{boat1.jpg}
+    }}
+    \subfloat[Right part of the image]{{
+    	\includegraphics[width=0.5\textwidth]{boat2.jpg}
+    }}\\
+    \subfloat[Transformed image (left transformed to right)]{{
+    	\includegraphics[width=0.5\textwidth]{boat_left_right_transformation.jpg}
+    }}
+    \subfloat[Transformed image (right transformed to left)]{{
+    	\includegraphics[width=0.5\textwidth]{boat_right_left_transformation.jpg}
+    }}
+\label{fig:boat_transformation}
+\end{figure}
+
+
+\begin{figure}[h]
+    \centering
+    \caption{Original and transformed bus images}
+    \subfloat[Left part of the image]{{
+    	\includegraphics[width=0.5\textwidth]{left.jpg}
+    }}
+    \subfloat[Right part of the image]{{
+    	\includegraphics[width=0.5\textwidth]{right.jpg}
+    }}\\
+    \subfloat[Transformed image (left transformed to right)]{{
+    	\includegraphics[width=0.5\textwidth]{bus_left_right_transformation.jpg}
+    }}
+    \subfloat[Transformed image (right transformed to left)]{{
+    	\includegraphics[width=0.5\textwidth]{bus_right_left_transformation.jpg}
+    }}
+\label{fig:bus_transformation}
+\end{figure}
+
+
+
+\section{Image Stitching}
+
+We have visualized image stitching for all possible combinations of images and you can see results in \cref{fig:boat_stitching} and \cref{fig:bus_stitching}.
+
+\begin{figure}[h]
+    \centering
+    \caption{Original and stitched boat images}
+    \subfloat[Left part of the image]{{
+    	\includegraphics[width=0.5\textwidth]{boat1.jpg}
+    }}
+    \subfloat[Right part of the image]{{
+    	\includegraphics[width=0.5\textwidth]{boat2.jpg}
+    }}\\
+    \subfloat[Stitched image (right transformed to left)]{{
+    	\includegraphics[width=0.5\textwidth]{boat_right_left_stitching.jpg}
+    }}
+    \subfloat[Stitched image (left transformed to right)]{{
+    	\includegraphics[width=0.5\textwidth]{boat_left_right_stitching.jpg}
+    }}
+\label{fig:boat_stitching}
+\end{figure}
+
+
+
+\begin{figure}[h]
+    \centering
+    \caption{Original and stitched bus images}
+    \subfloat[Left part of the image]{{
+    	\includegraphics[width=0.5\textwidth]{left.jpg}
+    }}
+    \subfloat[Right part of the image]{{
+    	\includegraphics[width=0.5\textwidth]{right.jpg}
+    }}\\
+    \subfloat[Stitched image (right transformed to left)]{{
+    	\includegraphics[width=0.5\textwidth]{bus_right_left_stitching.jpg}
+    }}
+    \subfloat[Stitched image (left transformed to right)]{{
+    	\includegraphics[width=0.5\textwidth]{bus_left_right_stitching.jpg}
+    }}
+\label{fig:bus_stitching}
+\end{figure}
+
+
+\section*{Conclusion}
+
+In this homework we have explored algorithms for keypoint matching using SIFT keypoints and image affine transformation and stitching using RANSAC.
+
+\end{document}
+ 

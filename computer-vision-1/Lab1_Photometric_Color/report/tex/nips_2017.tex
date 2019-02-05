@@ -1,0 +1,519 @@
+\documentclass{article}
+\usepackage{amsmath}
+% if you need to pass options to natbib, use, e.g.:
+% \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading nips_2017
+%
+% to avoid loading the natbib package, add option nonatbib:
+% \usepackage[nonatbib]{nips_2017}
+
+%\usepackage{nips_2017}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+\usepackage[final]{nips_2017}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{subfig}
+\usepackage{cleveref}
+\usepackage{graphicx}
+\usepackage{siunitx}
+
+\graphicspath{ {imgs/} }
+
+\title{Computer Vision 1: Photometric Stereo}
+
+
+\author{
+	Gabriele Bani \\
+	11640758 \\
+  \texttt{gabriele.bani@student.uva.nl} \\
+  %% examples of more authors
+  \And
+  	Andrii Skliar \\
+  11636785 \\
+  \texttt{andrii.skliar@student.uva.nl} \\
+}
+
+\begin{document}
+\maketitle
+\section*{Introduction}
+
+In this homework we apply various algorithms to solve some of the basic problems in computer vision.
+In Section 1, we explore the photometric stereo algorithm for reconstructing scenes. We study the behavior of the algorithm when presented with different number of images, and try to understand how its behavior is related to the commplexity of the objects in the scene. We also analyze how the shadow trick can help in producing better results and when it is more useful.
+In section 2 we briefly study some popular color spaces, and give examples on their applications. 
+In section 3, we study how using a few (restrictive) assumptions, we can model the problem of intrinsic image decomposition. We show how to reconstruct an image from its reflectance and shading components, and how changing the reflectance we can obtain different colors for the whole object.
+Finally, in section 4 we apply the Gray World algorithm to perform color correction, and discuss when it may fail, also briefly summarizing two more complex but more robust color constancy algorithm.
+\section{Photometric Stereo }
+
+\subsection{Estimating Albedo and Surface Normal}\label{albedo}
+
+\begin{enumerate}
+    \item We were expecting to see uniform albedo without any shadow, because illumination should be constant for both of the color regions of the sphere. However, that didn't happen, because to have that result we would need to have images with all possible light directions and 5 is clearly not enough. Due to this you can a bit of shadow closer to the border of the object in \cref{fig:5vs25_shadowtrick}.
+
+
+% \begin{figure}[h]
+%     \centering
+%     \subfloat[Albedo]{{
+%     	\includegraphics[width=0.2\textwidth]{es1/albedo_5_no_shadowtrick.png}
+%     	\label{initial_albedo}
+%     }}
+%     \qquad
+%     \subfloat[Normal]{{
+%     	\includegraphics[width=0.2\textwidth]{es1/normal_5_no_shadowtrick.png}
+%     	\label{initial_norm}
+%     }}
+%     \caption{Albedo and normal}
+%     \label{fig:albedo}
+% \end{figure}
+
+    
+    \item In practice, as mentioned in Section 5.4 of \cite{cvma}, at least more than 3 images are used to make least squares solution appropriate. When we use 4 or more images, we get over-determined system of the local surface orientation and albedo (both having 3 degrees of freedom) and that allows us to use the residual of least squares solution in order to determine whether shadowing has occurred. 
+    
+    % \begin{figure}[h]
+    % \centering
+    % \subfloat[Albedo for 5 images]{{
+    % 	\includegraphics[width=0.2\textwidth]{es1/albedo_5_no_shadowtrick.png}
+    % }}
+    % \qquad
+    % \subfloat[Albedo for 25 images]{{
+    % 	\includegraphics[width=0.2\textwidth]{es1/albedo_25_no_shadowtrick.png}
+    % }}
+    % \\
+    % \subfloat[Normals for 5 images]{{
+    % 	\includegraphics[width=0.2\textwidth]{es1/normal_5_no_shadowtrick.png}
+    % }}
+    % \qquad
+    % \subfloat[Normals for 25 images]{{
+    % 	\includegraphics[width=0.2\textwidth]{es1/normal_25_no_shadowtrick.png}
+    % }}
+    % \caption{Albedos and normals for 5 and 25 images}
+    % \label{fig:5vs25}
+    % \end{figure}
+    
+    
+    However, as stated in \cite{shadows} even three images can be enough. This also supports my point of understanding, that the number of images mostly depend on the complexity of the surface of the object and images that are being used for estimating albedo and surface normal. For example, if we need to estimate these values for flat object, one single image with no visible shadow might be enough. However, for flat objects there is no point in using photometric stereo. Therefore, let's assume that the object is not flat. In that case necessary number of images mostly depend on the complexity of the topology of the object and the material of the object. Let's say, object has a lot of dips and spikes. In that case, number of images needed to estimate albedo and surface normal will be very large, because we would need to consider images in which large number of sources of illumination will be used to have images with all possible shadows. 
+
+    
+    So, in general, to have proper least squares solution, we need at least 4 images, but ideally the minimum number of images should be given by a function of the topology of the surface and the material of the object.
+    
+    Despite that minimum number of images depends on the surface of the object, note that almost always the more images the better and this assumption is supported by the images that you can see in \cref{fig:5vs25_shadowtrick}.
+
+        
+    \item Shadows play crucial role in photometric stereo as they allow us to correctly estimate albedo and surface normal. Shadows are basically our main workhorse, because photometric stereo is based on the fact that "the amount of light reflected by a surface is dependent on the orientation of the surface in relation to the light source and the observer" as mentioned in \cite{wiki}. Therefore, because shadows are properties of the light source and the surface of the object being illuminated, they are used directly to reconstruct the surface.
+    
+    However, the main issue with using shadows is that when we have only few images, one or the other light can shadow large areas of surface. The problem is that when we are trying to calculate value of the vector $g(x,y)$ at point $(x, y)$ using least squares approach, it will try to account for the points which are shadowed in some images and not shadowed in the others, which means it tries to approximate the outliers. However, when we zero them out using shadow trick, they won't influence our solution anymore. This has a strong impact for a small number of images, (5 in our case), whereas for larger a large number of images (25 in our case), the large number of images will make the solution more robust to outliers and therefore the shadow trick will only make a slight difference. The results of applying the shadow trick can be seen in \cref{fig:5vs25_shadowtrick}.
+    
+\begin{figure}[h]
+    \centering
+    \subfloat[Albedo for 5 images without shadow trick]{{
+    	\includegraphics[width=0.15\textwidth]{es1/albedo_5_no_shadowtrick.png}
+    }}
+    \qquad
+    \subfloat[Albedo for 5 images with shadow trick]{{
+    	\includegraphics[width=0.15\textwidth]{es1/albedo_5_shadowtrick.png}
+    }}
+    \qquad
+    \subfloat[Normals for 5 images without shadow trick]{{
+    	\includegraphics[width=0.15\textwidth]{es1/normal_5_no_shadowtrick.png}
+    }}
+    \qquad
+    \subfloat[Normals for 5 images with shadow trick]{{
+    	\includegraphics[width=0.15\textwidth]{es1/normal_5_shadowtrick.png}
+    }}
+    \\
+    \subfloat[Albedo for 25 images without shadow trick]{{
+    	\includegraphics[width=0.15\textwidth]{es1/albedo_25_no_shadowtrick.png}
+    }}
+    \qquad
+    \subfloat[Albedo for 25 images without shadow trick]{{
+    	\includegraphics[width=0.15\textwidth]{es1/albedo_25_shadowtrick.png}
+    }}
+    \qquad
+    \subfloat[Normals for 25 images without shadow trick]{{
+    	\includegraphics[width=0.15\textwidth]{es1/normal_25_no_shadowtrick.png}
+    }}
+    \qquad
+    \subfloat[Normals for 25 images with shadow trick]{{
+    	\includegraphics[width=0.15\textwidth]{es1/normal_25_shadowtrick.png}
+    }}
+    \caption{Albedos and normals for 5 and 25 images with and without shadow trick}
+    \label{fig:5vs25_shadowtrick}
+    \end{figure}
+    
+
+\end{enumerate}
+
+\subsection{Test of Integrability}
+  \begin{figure}[h]
+    \centering
+    \subfloat[Points, where SE > 0.005 for 5 images (in white)]{{
+    	\includegraphics[width=0.15\textwidth]{SphereGray5_SE_noshadowtrick_hightreshold.png}
+    }}
+    \qquad
+    \subfloat[Points, where SE > 0.00005 for 5 images (in white)]{{
+    	\includegraphics[width=0.15\textwidth]{SphereGray5_SE_noshadowtrick_lowtreshold.png}
+    }}
+    \qquad
+    \subfloat[Points, where SE > 0.005 for 25 images (in white)]{{
+    	\includegraphics[width=0.15\textwidth]{SphereGray25_SE_noshadowtrick_hightreshold.png}
+    }}
+    \qquad
+    \subfloat[Points, where SE > 0.00005 for 25 images (in white)]{{
+    	\includegraphics[width=0.15\textwidth]{SphereGray25_SE_noshadowtrick_lowtreshold.png}
+    }}
+    \caption{Points, where integrability condition is not satisfied}
+    \label{fig:second_deriv}
+    
+\end{figure}
+ When we check if Schwarz integrability condition is satisfied, as we can see from \cref{fig:second_deriv}, the errors occur on the border of the figure, because that is a place where image suddenly changes from sphere surface to the black background. This happens because even despite being discretized in pixels, the color of the image of the sphere changes smoothly and that gives us more or less continuous function. However, at the border it is not continuous anymore and therefore we can assume that Clairaut's theorem is not satisfied and therefore integrability condition can't be satisfied as mixed derivatives are not symmetric. 
+ 
+ When we use more images, the number of points where error occurs becomes smaller. This is particularly due to the fact that the estimated normal is closer to the true normal of the object, and therefore the normal changes more smoothly in all directions, which allows Schwarz integrability condition to be satisfied. So, ideally, if we could reconstruct normals perfectly (i.e using images with light source in all possible positions), there will be no errors except for the points on the border.
+ 
+ Taking into account that with a lower threshold it can be seen that error also occurs on the places where algorithm fails to correctly predict true normal of the point because of the low number of images and therefore bad shadowing. However, it makes sense to talk about the error only on the border, because it doesn't depend on the threshold. Even if we make threshold reasonably large, the error will still be there. This error also holds if you use more images. We have used images in \cref{fig:second_deriv} to investigate the problem further and images tend to support our assumptions.
+
+\subsection{Shape by Integration}
+
+\begin{figure}[h]
+    \centering
+    \subfloat[Column-major order]{{
+    	\includegraphics[width=0.15\textwidth]{column_major2.png}
+    }}
+    \qquad
+    \subfloat[Row-major order]{{
+    	\includegraphics[width=0.15\textwidth]{row_major2.png}
+    }}
+    \qquad
+    \subfloat[Average order]{{
+    	\includegraphics[width=0.15\textwidth]{average_major2.png}
+    }}
+    \caption{Column-major, row-major and average order height map for the grayscale monkey image}
+    \label{fig:rowvscolumn}
+    \end{figure}
+    
+\begin{enumerate}
+    \item The difference between column-major and row-major order is the direction, that gets prioritized, as you can see in the image. This also means, that from different points of view different orders show different results (i.e. column-major order gives more realistic results better if you look from the bottom, but row-major order gives more realistic results if you look from the side).
+    
+    \item As we can see from \cref{fig:rowvscolumn}, compared to previous two approaches, average over row-major and column-major approaches performs best, because it averages over both directions and thus smoothes out the final height map making it more similar to real height map. Also, when we use more images, final height map smoothes out as well, so for more images the order doesn't change the result significantly.
+\end{enumerate}
+
+\subsection{Experiments with different objects}
+
+\begin{enumerate}
+    \begin{figure}[h]
+        \centering
+        \subfloat[30 images used]{{
+        	\includegraphics[width=0.4\textwidth]{MonkeyGray25_albedo_normals_noshadowtrick.png}
+        }}
+        \subfloat[All images used]{{
+        	\includegraphics[width=0.4\textwidth]{MonkeyGray_albedo_normals_noshadowtrick.png}
+        }}\\
+        \caption{GrayMonkey albedo and normals for different number of images}
+        \label{fig:graymonkey_30vsall}
+    \end{figure}
+    
+    \item The main error is the same as the error in first task of \cref{albedo}, where we expected the albedo of our object to be constant due to the constant reflectance for both of the color regions of the object. However, because in this case surface of the Monkey is relatively complex, we can't get images with enough directions of the light that would account for all possible shadows and therefore we can still see shadows from eyes and ears in our albedo. If we use less images, as you can see in \cref{fig:graymonkey_30vsall}, the result gets even worse, so the solution would be to use more images with sources of illumination located in different points to show all possible shadows that can occur for the given object.
+    
+    \begin{figure}[h]
+        \centering
+        \subfloat[ColorSphere without normalized normals]{{
+        	\includegraphics[width=0.4\textwidth]{ColorSphere_albedo_normals_no_norm.png}
+        } \label{colorsphere_nonorm}}
+        \qquad
+        \subfloat[ColorSphere with normalized normals]{{
+        	\includegraphics[width=0.4\textwidth]{ColorSphere_albedo_normals_norm.png}
+        }\label{colorsphere_norm}}\\
+        \subfloat[ColorMonkey with incorrect loader]{{
+        	\includegraphics[width=0.4\textwidth]{es1/ColorMonkey_albedo_normals_norm.png}
+        }\label{colormonkey_incorrect}}
+        \qquad
+        \subfloat[ColorMonkey with normalized normals]{{
+        	\includegraphics[width=0.4\textwidth]{ColorMonkey_albedo_normals_norm.png}
+        }\label{colormonkey_correct}}
+        \caption{ColorSphere and ColorMonkey with and without normalized normals}
+        \label{color_photometry}
+    \end{figure}
+    
+    \item We have changed our code to construct albedo and normals in the following way: albedo is calculated separately over each of the three channels and is then combined into a single RGB image; normals are also calculated for each of the channels as well, but then they are averaged and normalized again. There might be several possible issues with that - if we don't normalize our final normals, we get white lines in the places where color changes from one to another (as you can see in \cref{colorsphere_nonorm}). However, normalization fixes that issue and it can be clearly seen from \cref{colorsphere_nonorm}.
+    Another issue is the one with zero pixel, which happens due to the loading process because we normalize images in $image\_stack$ and when $min$ and $max$ value in the channel are the same, we get $NaN$ values for the whole channel and that leads to zeros in the final albedo and normals. This issue can be seen if you compare \cref{colormonkey_incorrect} where it has not been fixed and \cref{colormonkey_correct}, where loader has been fixed.
+    
+    
+    
+    \begin{figure}[h]
+        \centering
+        \subfloat[Face heightmap with column-major order, shadow trick]{{
+        	\includegraphics[width=0.2\textwidth]{faces_heightmap_column.png}
+        }}
+        \qquad
+        \subfloat[Face heightmap with row-major order, shadow trick]{{
+        	\includegraphics[width=0.2\textwidth]{faces_heightmap_row.png}
+        }}
+        \qquad
+        \subfloat[Face heightmap with average-major order, shadow trick]{{
+        	\includegraphics[width=0.2\textwidth]{faces_heightmap_average.png}
+        }}\\
+        \subfloat[Face heightmap with column-major order, no shadow trick]{{
+        	\includegraphics[width=0.2\textwidth]{faces_noshadow_heightmap_column.png}
+        }}
+        \qquad
+        \subfloat[Face heightmap with row-major order, no shadow trick]{{
+        	\includegraphics[width=0.2\textwidth]{faces_noshadow_heightmap_row.png}
+        }}
+        \qquad
+        \subfloat[Face heightmap with average-major order, no shadow trick]{{
+        	\includegraphics[width=0.2\textwidth]{faces_noshadow_heightmap_average.png}
+        }}\\
+        \subfloat[Face heightmap with column-major order, no shadow trick, filtered images]{{
+        	\includegraphics[width=0.2\textwidth]{faces_filtered_noshadow_heightmap_column.png}
+        }}
+        \qquad
+        \subfloat[Face heightmap with row-major order, no shadow trick, filtered images]{{
+        	\includegraphics[width=0.2\textwidth]{faces_filtered_noshadow_heightmap_row.png}
+        }}
+        \qquad
+        \subfloat[Face heightmap with average-major order, no shadow trick, filtered images]{{
+        	\includegraphics[width=0.2\textwidth]{faces_filtered_noshadow_heightmap_average.png}
+        }}\\
+        \subfloat[Face heightmap with column-major order, shadow trick, filtered images]{{
+        	\includegraphics[width=0.2\textwidth]{faces_filtered_shadow_heightmap_column.png}
+        }}
+        \qquad
+        \subfloat[Face heightmap with row-major order, shadow trick, filtered images]{{
+        	\includegraphics[width=0.2\textwidth]{faces_filtered_shadow_heightmap_row.png}
+        }}
+        \qquad
+        \subfloat[Face heightmap with average-major order, shadow trick, filtered images]{{
+        	\includegraphics[width=0.2\textwidth]{faces_filtered_shadow_heightmap_average.png}
+        }}
+        
+        \caption{Face heightmap for different configurations}
+        \label{faces_heightmap}
+    \end{figure}
+
+    \item  From the images \cref{faces_heightmap} we can see, that shadow trick makes height map of the face images very distorted for any order of integration.
+    
+    This happens due to multiple violations of shape-from-shading method, all of which can be seen in \cref{faces_violations}. First of all, some of the images are simply corrupted and have weird lines of light all over the image. Also, some of the facial points don't have Lambertian reflectance (i.e. nose) and therefore do not reflect surface diffusely. Moreover, we can see that some images contain shading from objects, which are not in the image at all (i.e. from hair). Also, in some of the images eyes of the person are moving and therefore this violated the constraint that object should stay constant within all the images and only lighting conditions change. 
+    
+    However, our main finding is that when light source is positioned behind the head (absolute value of its azimuth is larger than \ang{90}), photos get very weird, because even though light source is behind the head, some parts of the face are still illuminated. This is especially weird if you look at how light changes from images with azimuth \ang{95}, where the whole image is completely dark to images with azimuth \ang{120} and \ang{130}, where there some parts of the face are illuminated again. Also, we can assume that human face is more or less symmetric and therefore symmetric light sources (i.e. with azimuths \ang{130} and -\ang{130}) would illuminate face in a similar way. However, if you compare images with \ang{130} and -\ang{130}; \ang{120} and -\ang{120}, you can clearly see that this assumption doesn't hold. That led us to three possible options why these photos may be wrong: either there is a special box for photo shoot, which reflects some of the light back on the face or light source used changes from photo to photo, or there is no point light source and global illumination is used. Clearly, any of these would violate assumptions for shape-from-shading method.
+    
+    We tried filtering out all the problematic images and that actually led to better results, which you can see in \cref{faces_heightmap}. However, with shadow trick heightmap was still bad and the reason might be that some of the points are black (i.e. eybrows, pupils) in all the images and that makes shadow trick fail.
+    
+    \begin{figure}[h]
+        \centering
+        \subfloat[Shading from hair; Azimuth:\ang{0} Elevation:\ang{90}]{{
+        	\includegraphics[width=0.15\textwidth]{yaleB02_P00A+000E+90.png}
+        }}
+        \qquad
+        \subfloat[Specular highlights on the nose and cheeks]{{
+        	\includegraphics[width=0.15\textwidth]{yaleB02_P00A+060E+20.png}
+        }}
+        \qquad
+        \subfloat[Corrupted image]{{
+        	\includegraphics[width=0.15\textwidth]{yaleB02_P00A+020E-10.png}
+        }}
+        \qquad
+        \subfloat[Corrupted image]{{
+        	\includegraphics[width=0.15\textwidth]{yaleB02_P00A+025E+00.png}
+        }}\\
+        \subfloat[Movement of eyes]{{
+        	\includegraphics[width=0.15\textwidth]{yaleB02_P00A+035E-20.png}
+        }}
+        \qquad
+        \subfloat[Movement of eyes]{{
+        	\includegraphics[width=0.15\textwidth]{yaleB02_P00A+035E+15.png}
+        }}
+        \qquad
+        \subfloat[Azimuth:\ang{95} Elevation:\ang{0}]{{
+        	\includegraphics[width=0.15\textwidth]{yaleB02_P00A+095E+00.png}
+        }}
+        \qquad
+        \subfloat[Azimuth:-\ang{95} Elevation:\ang{0}]{{
+        	\includegraphics[width=0.15\textwidth]{yaleB02_P00A-095E+00.png}
+        }}
+        \\
+        \subfloat[Azimuth:\ang{120} Elevation:\ang{0}]{{
+        	\includegraphics[width=0.15\textwidth]{yaleB02_P00A+120E+00.png}
+        }}
+        \qquad
+        \subfloat[Azimuth:-\ang{120} Elevation:\ang{0}]{{
+        	\includegraphics[width=0.15\textwidth]{yaleB02_P00A-120E+00.png}
+        }}
+        \qquad
+        \subfloat[Azimuth:\ang{130} Elevation:\ang{20}]{{
+        	\includegraphics[width=0.15\textwidth]{yaleB02_P00A+130E+20.png}
+        }}
+        \qquad
+        \subfloat[Azimuth:-\ang{130} Elevation:\ang{20}]{{
+        	\includegraphics[width=0.15\textwidth]{yaleB02_P00A-130E+20.png}
+        }}
+        \caption{Shape-from-shadow violations in faces dataset}
+        \label{faces_violations}
+    \end{figure}
+    
+\end{enumerate}
+
+\section{Color Spaces}
+
+\subsection{RGB color model}
+	The RGB model is used for different reasons. The main one is that it tries to encode information about color in a way which is biologically plausible, since the eyes perceive color using red, green and blue cones. Also, we use the RGB color model as basis our our digital cameras because the R, G and B values can be calculated easily by using integrals of spectral response function for every sensor over wavelenghts. In formulas for channel c, we have $c = \int L(\lambda) S_c (\lambda) d \lambda $, where $L(\lambda)$ is the incoming spectrum of light and the function $S_c$ is the spectral sensivity of the sensor for channel $c$.
+\subsection{Color Space Properties} 
+
+\begin{figure}[h]
+    \centering
+    \subfloat[RGB]{{
+    	\includegraphics[width=0.8\textwidth]{es2/rgb2.png}
+    }}\\
+    \subfloat[Opponent color space]{{
+    	\includegraphics[width=0.8\textwidth]{es2/opponent2.png}
+    }}\\
+    \subfloat[HSV]{{
+    	\includegraphics[width=0.8\textwidth]{es2/hsv2.png}
+    }}\\
+    \subfloat[YCbCr]{{
+    	\includegraphics[width=0.8\textwidth]{es2/ycbcr2.png}
+    }}\\
+    \subfloat[Average]{{
+    	\includegraphics[width=0.2\textwidth]{es2/gray_average.png}
+    }}
+    \subfloat[Luminosity]{{
+    	\includegraphics[width=0.2\textwidth]{es2/gray_luminosity.png}
+    }}
+    \subfloat[Lightness]{{
+    	\includegraphics[width=0.2\textwidth]{es2/gray_lightness.png}
+    }}
+    \caption{Different color space visualizations}
+    \label{fig:components}
+\end{figure}
+
+\begin{enumerate}
+    \item The opponent color space (oRGB) is mainly used in computer graphics application. The reason for using it is that like HSV, it allows to easily operate on colors, and also allows a range of other operations. Furthermore, oRGB allows for more computationally efficient calculations than HSV and since it has two color channels, it can support efficient compression with minimal loss of information similarly to the color space CIE L*a*b*.
+    
+    \item The normalized RGB loses information about light intensity because of the division by $S = R+G+B$. One effect of this is that white and black will become the same grey color. Also, variations of light of the same color will be the same, so for example darker blue can be the same as a lighter blue.
+	Normalized RGB can thus be used when we do not want our algorithm to be sensitive to excessive light or shade.
+	
+	\item One advantage in using HSV over RGB is that it separates the image intensity from the color information. Some operations such as histogram equalization can be better done when having a separate channel for intensity. It is also much easier for example to filter colors since they are represented with a single continuous variable and not as a mixture of three channels.
+	
+	\item yCrCb represents luminance information mainly with the Y channel, while the other two channels carry information about color. This can be exploited in video transmission to reduce the bandwidth used with minimal loss in image quality by subsampling only the color channels.
+	
+	\item The greyscale color space is used when color is not relevant for the task, for example in some cases of edge detection or feature detection. Also, it can used to simplify computations and algorithms, because in greyscale an image can be represented simply as a 2D matrix. 
+	
+	The greyscale converting methods that we used are all very simple but achieve different results.
+	
+	The lightness method creates the image by averaging between the two most prominent colors, and as effect tends to reduce contrast.
+	
+	The average method is the most simple, and computes the final image as an average of the three RGB channels. This method suffers however from the fact that shades of gray are not represented in a similar way to how humans perceive luminosity.
+	
+	On the opposite, the luminosity method uses a weighted average of the three channels, giving more importance to green, and less to red, and much less to blue. This is done to imitate the way humans perceive light and in fact usually produces the most visually plausible results. 
+	
+\end{enumerate}
+
+    
+\subsection{More on color spaces} 
+
+The Lab (or L*a*b*) color space defines colors using three dimensions: L, a and b. L stands for lightness, and represents white to black colors. An L value of zero represents white color, while 100 represents black one, and gray colors are in between. The a channel goes from the cyan color at -100, to a magenta color at 100, while the b channel goes from blue at -100 to yellow at 100. 
+	
+The Lab color space has been created from the CIE 1931 XYZ space with the objective of being more perceptually uniform, so that a change of the same value in the color value should produce a change of about the same visual importance.
+
+One property of the Lab colors is that they are absolute, so they are device independent, which allows to communicate colors across devices. So, it can be used in all applications that involve transmitting a color between two different devices. One example can be matching paint colors to printed media.
+
+\section{Intrinsic Image Decomposition}
+\begin{figure}[h]
+    \centering
+    \subfloat[Original image]{{
+    	\includegraphics[width=0.3\textwidth]{ball.png}
+    }}
+    \subfloat[Reflectance component]{{
+    	\includegraphics[width=0.3\textwidth]{ball_reflectance.png}
+    }}
+    \subfloat[shading component]{{
+    	\includegraphics[width=0.3\textwidth]{ball_shading.png}
+    }}
+    %\caption{Reflectance and shading components}
+    \label{fig:intrinsic}
+\end{figure}
+
+
+\begin{enumerate}
+	\item Apart from reflectance and shading, an image can be for instance decomposed into structure and texture. Although the goal of this decomposition is hard to formulate explicitly, the idea is that an image can be thought of as being composed of a structural part, which corresponds to the main large objects in the image, and a texture part, which represents the finegrained details of smaller scale. These details are often considered to be periodical or have an oscillatory nature.
+	
+	\item The main reason why almost all image decomposition datasets are composed of synthetic images is that it is very difficult  to capture real world photos with known ground truth reflectance and illumination. By using synthetic images, we know those ground truths, and can properly train and evaluate different intrinsic image decomposition algorithms.
+	
+	\item To reconstruct the original image  we can multiply its reflectance and shading. The result obtained using the data of \textit{ball.png} can be seen in \cref{fig:intrinsic}.
+\end{enumerate}
+
+
+
+\subsection{Recoloring}
+
+\begin{figure}[h]
+    \centering
+    \subfloat[From left to right: Original image, magenta recolored image, green recolored image]{{
+    	\includegraphics[width=0.9\textwidth]{recolor2.png}
+    }}
+    \caption{Recoloring}
+    \label{fig:recolor}
+\end{figure}
+
+\begin{enumerate}
+	\item The normalized true material color is $(0.7216, 0.5529, 0.4235)$, which corresponds to the unnormalized color $(184, 141, 108)$. To extract it, since we know that the color is uniform, we take the maximum value for every channel.
+	
+	\item To recolor the ball image, we set to zero the color channels that are not needed. In other words, we just keep the G channel for the green recoloring and the R channel for the magenta recoloring. The recolored images can be seen in \cref{fig:recolor}.
+	
+	\item The reason is that although the color is uniform, the reconstruction of the image consists in a multiplication with the shading, which is clearly non uniform. This causes the resulting images not to display the pure color and being non uniform.
+\end{enumerate}
+
+
+
+
+\section{Color Constancy}
+
+
+
+
+\begin{enumerate}
+    \item The results of the gray world algorithm can be seen in \cref{fig:awb}, which clearly shows that grey world algorithm removes the reddish color.
+    \begin{figure}[h]
+        \centering
+    \caption{Original image (on the left) and corrected using Gray-world algorithm (on the right) }
+    \subfloat{{
+    	\includegraphics[width=0.4\textwidth]{awb.png}
+    }}\\
+    \subfloat{{
+    	\includegraphics[width=0.4\textwidth]{grey_wood2.png}
+    }}
+    \label{fig:awb}
+\end{figure}
+
+    \item The gray world algorithm assumes that the scene is a neutral gray on average. This can hold when the colors are well distributed in the scene, and the average reflected color is assumed to be the color of the light. The assumption does not hold when colors are not well distributed, for example when many similar colors are present. This can be the case in natural images, in which there are typically just one or two dominant colors (such as blue for the sky or sea, and green for grass). This is the case in the image shown in \cref{fig:awb}, where we can clearly see that the dominant colors are blue and green. The result of the gray world algorithm is visibly unsatisfactory because of the violation of the grey world assumption.
+    
+    
+    \item The ACE algorithm \cite{ace2002} is inspired by the adaptation mechanisms of the human visual system, and is in fact able to adapt to widely varying lighting conditions. The algorithm takes into the account the spatial distribution of color information as can be seen from the formulas below. The first step of the algorithm is called chromatic/spatial adjustment, and produces an image R, in which every pixel is recomputed according to the image content. The image $R_c$, is calculated for every channel $c$.
+    \begin{align*}
+        R_c (p) = \sum_{j \in S, j \neq p} \frac{r(I_c(p) - I_c(j))}{d(p, j)}
+    \end{align*}
+    
+    where $d$ is a distance function (such as euclidean or Manhattan) used to weigh the amount of global or local contribution. The function $r$ instead is typically taken to be a step function or a saturated linear function, and is meant to imitate the brain lateral inhibition mechanism of neurons. $S$ is a subset of the image, and can be chosen to account more or less about local or global information.
+    The second step of the algorithm is simply a projection of the intermediate images $R_c$ in the range $[0, 255]$, and is typically chosen to be linear.
+    
+    Another algorithm that can be used for color constancy is the gamut mapping algorithm \cite{gamut}, which is a pixel based color constancy algorithm. This uses the assumption that in real world images, only a limited number of colors can be observed for a given illuminant. This means that any unexpected variations of the colors of an image is caused by a deviation in the color of the light source. The algorithm relies on a canonical gamut, which is the set of colors that can occur under a given illuminat, and is learned from a training set.
+    When presented with a new input image, its input gamut is constructed. Once the input gamut is obtained, this is used together with the canonical gamut to find a set of feasible mappings that map the input gamut into the canonical gamut. Then, one mapping is selected from the set of feasible mappings using an estimator. The selected mapping is applied to the input image to estimate the unknown light source.
+\end{enumerate}
+
+\section{Conclusion}
+
+In this homework, we have tried to solve some important computer vision problems using various algorithms, and argued their strenghts and their applicability in the real world. Using the Photometric stereo algorithm, we managed to estimate surface normal and albedo of objects. We have argued why although only three images of the same objects under different illumination are theoretically needed, a large number of images can be needed for complex objects. We have also explored how the shadow trick can help generating better results.
+We have understood how different color spaces work, and when they are more useful since they can represent some of the light information in a more explicit way.
+Images can be decomposed in many components, and we explored how to combine shading and reflectance to manipulate images, also briefly describing other possible image decompositions. 
+We were also able to succesfully apply the Gray World algorithm  for color correction, and argued why in practice it can fail in the real world, briefly analyzing two more complex alternatives.
+
+
+\bibliographystyle{plain}
+\bibliography{bibliography}
+
+\end{document}

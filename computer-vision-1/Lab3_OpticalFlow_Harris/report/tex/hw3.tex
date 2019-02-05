@@ -1,0 +1,185 @@
+\documentclass{article}
+\usepackage{amsmath}
+% if you need to pass options to natbib, use, e.g.:
+% \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading nips_2017
+%
+% to avoid loading the natbib package, add option nonatbib:
+% \usepackage[nonatbib]{nips_2017}
+
+%\usepackage{nips_2017}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+\usepackage[final]{nips_2017}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{subfig}
+\usepackage{cleveref}
+\usepackage{graphicx}
+\usepackage{siunitx}
+
+\graphicspath{ {hw3/imgs/} }
+
+\title{Computer Vision 1: Harris Corner Detector and Optical Flow}
+
+\author{
+	Gabriele Bani \\
+	11640758 \\
+  \texttt{gabriele.bani@student.uva.nl} \\
+  %% examples of more authors
+  \And
+  	Andrii Skliar \\
+  11636785 \\
+  \texttt{andrii.skliar@student.uva.nl} \\
+}
+
+\begin{document}
+\maketitle
+
+\section*{Introduction}
+
+In this homework we explore various algorithms for corner detection and optical flow estimation.
+
+\section{Harris Corner Detector}
+
+\begin{figure}[h]
+    \centering
+    \caption{Results for Harris Corner detection}
+    \subfloat[Image derivatives along $x$ direction $I_x$]{{
+    	\includegraphics[width=0.5\textwidth]{toy_harris_Ix.png}
+    }}\\
+    \subfloat[Image derivatives along $y$ direction $I_y$]{{
+    	\includegraphics[width=0.5\textwidth]{toy_harris_Iy.png}
+    }}\\
+    \subfloat[Detected corners (marked by red points)]{{
+    	\includegraphics[width=0.5\textwidth]{toy_harris_corners.jpg}
+    }}
+\label{fig:harris1}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \caption{Results for Harris Corner detection}
+    \subfloat[Image derivatives along $x$ direction $I_x$]{{
+    	\includegraphics[width=0.5\textwidth]{ping_harris_Ix.png}
+    }}\\
+    \subfloat[Image derivatives along $y$ direction $I_y$]{{
+    	\includegraphics[width=0.5\textwidth]{ping_harris_Iy.png}
+    }}\\
+    \subfloat[Detected corners (marked by red points)]{{
+    	\includegraphics[width=0.5\textwidth]{ping_harris_corners.jpg}
+    }}
+\label{fig:harris2}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \caption{Results for Harris Corner detection rotation}
+    \subfloat[No rotation]{{
+    	\includegraphics[width=0.4\textwidth]{toy_harris_corners.jpg}
+    }}
+    \subfloat[90 degree rotation]{{
+    	\includegraphics[width=0.4\textwidth]{toy_harris_corners_rot.jpg}
+    }}\\
+    \subfloat[No rotation]{{
+    	\includegraphics[width=0.4\textwidth]{ping_harris_corners.jpg}
+    }}
+    \subfloat[90 degree rotation]{{
+    	\includegraphics[width=0.4\textwidth]{ping_harris_corners_rot.jpg}
+    }}
+\label{fig:harris_rot}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \caption{Harris corners with varying sigma and threshold}
+    \subfloat[$\sigma$ 0.5, $\threshold$ 100]{{
+    	\includegraphics[width=0.5\textwidth]{harris_corners_05_100.jpg}
+    }}
+    \subfloat[$\sigma$ 0.5, $\threshold$ 400]{{
+    	\includegraphics[width=0.5\textwidth]{harris_corners_05_400.jpg}
+    }}\\
+    \subfloat[$\sigma$ 1, $\threshold$ 100]{{
+    	\includegraphics[width=0.5\textwidth]{harris_corners_1_100.jpg}
+    }}
+    \subfloat[$\sigma$ 1, $\threshold$ 400]{{
+    	\includegraphics[width=0.5\textwidth]{harris_corners_1_400.jpg}
+    }}
+\label{fig:harris_params}
+\end{figure}
+
+
+You can observe obtained results in \cref{fig:harris1} and \cref{fig:harris2}. We have tried different values of sigma and threshold and, as we found out, they influence the final result quite heavily. You can see results with different parameters in \cref{fig:harris_params}. 
+
+Lowering the threshold makes more points to be considered as corners and in many cases we would like to avoid it, because this makes results noisy. We have found out, that with larger $\sigma$ algorithm tends to detect more points and we need larger threshold to filter them out.
+
+After searching for perfect threshold, we have concluded, that for $pingpong$ images threshold should be fairly low - $10$, while for $person\_toy$ images it should be larger - $400$ worked out pretty well for us. In both cases, we were using value of $\sigma=1$, which works out pretty well for us.
+
+Also, as you can see in \cref{fig:harris_rot}, Harris algorithm is indeed rotation-invariant (it will also be discussed in the next question).
+\begin{enumerate}
+    \item Is the algorithm rotation-invariant?\\
+    Yes, it is rotation-invariant, because we are not looking at the whole image, but detecting corners using eigenvalue-decomposition of the patch, which means, that when image is rotated, patches will change their orientation, and this will change the shape of the neighbourhood, but eigenvalues will stay the same and this makes algorithm rotation invariant. If we would look at the whole image at one to detect corners, that would make it sensitive to rotation, but as long as we don't, it is invariant.
+    
+    \item How do Shi and Tomasi define cornerness?\\
+    $H = min(\lambda_1, \lambda_2)$, which according to their experiments, is supposed to be a better criteria for cornerness.
+    
+    \item Do we need to calculate the eigen decomposition of the image or the patches?\\
+    We need to calculate the eigen decomposition of the patches, because to do so, we need to calculate convolution between Gaussian filter and window centered at the current pixel. Also, we could do it with the whole image as a window, but this way we would only be able to calculate cornerness for one pixel right in the center of the image and that wouldn't make sense, because we need to find pixels, for which cornerness is largest in a certain window.
+    
+    \item In the following scenarios, what could be the relative cornerness values assigned by Shi and Tommasi?
+    \begin{itemize}
+        \item (a) Both eigenvalues are near 0.\\
+        Cornerness value will be 0. This pixel is not corner.
+        \item (b) One eigenvalue is big and the other is near zero.\\ Cornerness value will be near 0. This pixel is not corner.
+        \item (c) Both eigenvalues are big.\\
+        Cornerness value will be large. This pixel has a high chance of being corner.
+    \end{itemize}
+    
+\end{enumerate}
+
+\section{Optical Flow with Lucas-Kanade Algorithm}
+You can observe obtained results in \cref{fig:lucas}.
+
+\begin{itemize}
+    \item At what scale those algorithms operate; i.e local or global? \\
+    Lukas-Kanade operates on a local scale, because it is based on the asumption regarding that pixel being examined has approximately constant optical flow in a neighbourhood and that allows for optical flow equation to hold in that neighbourhood.\\
+    Horn-Schunck operates on a global scale, because it uses the assumption about that flow over the whole image is smooth and minimizes flow as a global energy functional.
+    
+    \item How do they behave on ﬂat regions?
+    \\
+    Lukas-Kanade will perform worse due to the fact, that it is operating in a local neighborhood, which is flat and therefore has small gradient. However, Horn-Schunck should perform much better, because it operates on a global scale and can therefore overcome the problem of a region being flat by taking information about changes in the whole image into account. 
+    
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+\caption{Optical flow in sphere and synthetic image}
+\subfloat{{
+	\includegraphics[width=0.9\textwidth]{sphere.png}
+}}\\
+\subfloat{{
+	\includegraphics[width=0.9\textwidth]{synth.png}
+}}
+\label{fig:lucas}
+\end{figure}
+
+\section{Feature Tracking}
+
+\begin{enumerate}
+    \item Why do we need feature tracking while we can detect features for each and every frame?\\
+    In most of the cases, feature detection is much more expensive, than tracking, which can be done in real-time, and that might be the first reason. The other reason is that, for example, for object detection, tracking is much more robust to changes in viewpoint and therefore might perform better. Also, tracking can be more robust to overlapping objects and can predict the movement of the points in the image.
+\end{enumerate}
+
+
+\section*{Conclusion}
+
+In this homework we have explored various algorithms for corner detection and optical flow estimation.
+
+\end{document}
