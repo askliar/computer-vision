@@ -25,8 +25,6 @@
 # *.pdf
 
 ## Generated if empty string is given at "Please type another file name for output:"
-*.jpg
-*.png
 *.mat
 *.fig
 ## Bibliography auxiliary files (bibtex/biblatex/biber):

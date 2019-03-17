@@ -14,7 +14,7 @@ Labs and presentation of the [Computer Vision 1](http://coursecatalogue.uva.nl/x
 [Problem statement](computer-vision-1/Lab1_Photometric_Color/Lab01_Instruction.pdf) and [Solution](computer-vision-1/Lab1_Photometric_Color/report/hw1.pdf)
 
 <p align="center">
-  <img src="https://cdn.pbrd.co/images/HZKtcFq.png" width="600" /><br />
+  <img src="https://lh3.googleusercontent.com/GbnXl4scRgKGoGEhbgLvm5ziAxS2ktKhjEfbgO2YFeI-kHsWcJVEFgjbd5KVKBznkyPhBO0vGIZCLHz8R6noTN6_P43_B2Y189Mzsr-oX1dRgN60COGw2IXGsk_s6y-Y8lL6tawR2ZI=w2400" width="600" /><br />
   <i>Face heightmap for different conﬁgurations</i>
 </p>
 
@@ -22,7 +22,7 @@ Labs and presentation of the [Computer Vision 1](http://coursecatalogue.uva.nl/x
 [Problem statement](computer-vision-1/Lab2_Filters/Lab02_Instruction.pdf) and [Solution](computer-vision-1/Lab2_Filters/report/hw2.pdf)
 
 <p align="center">
-  <img src="https://cdn.pbrd.co/images/HZKvkVw.png" width="600" /><br />
+  <img src="https://lh3.googleusercontent.com/KJ1EAG9Xm0BP2UeGIOhJwNY3BNUOFwEdY87qwdKGzRDR03MsHhBlb3R-aFhwiR-gyo2jLBDxNF8Z8E9kyg0PwqwEegCQ9Sp9XJGa6LthisZfOBT_6u0Uwee64Caurjr7hdrI3w-WrPk=w2400" width="600" /><br />
   <i>Gabor segmentation applied to images with and without smoothing</i>
 </p>
 
@@ -32,7 +32,7 @@ Labs and presentation of the [Computer Vision 1](http://coursecatalogue.uva.nl/x
 
 
 <p align="center">
-  <img src="https://cdn.pbrd.co/images/HZKzJaz.png" width="650" /><br />
+  <img src="https://lh3.googleusercontent.com/O3DR-0VsK8zU7UAP97FfgJkjeE-YYI7izVn4A_-I7HAwvZLWKHK80rImrsX-nbccSafGG2S1yk-1tlNVFeF0NpPz6Xl3D9GTZry0rWtMsBhBMZhdjYLyiA3aYfwOmaMCxSi74u71VNE=w2400" width="650" /><br />
   <i>Corner detection with varying sigma and threshold</i>
 </p>
 
@@ -47,7 +47,7 @@ Labs and presentation of the [Computer Vision 1](http://coursecatalogue.uva.nl/x
 
 
 <p align="center">
-  <img src="https://cdn.pbrd.co/images/HZKxWjs.png" width="650" /><br />
+  <img src="https://lh3.googleusercontent.com/j8j-U_SqEf8LmQIWXUv6x8loDM7uonmmgWcv0IqH6yOfGS1FKwne2_Dvb_MXdIPCykSLeeeGz3oTM66QgMSqiMErun_jHux_YTaKvjHFC5oDk2FCPFCPzXMIhZlWtRvjsSncHRIYClI=w2400" width="650" /><br />
   <i>Original and stitched bus images</i>
 </p>
 
@@ -56,12 +56,12 @@ Labs and presentation of the [Computer Vision 1](http://coursecatalogue.uva.nl/x
 [Problem statement for part 1](computer-vision-1/Lab5_Project/FinalProject_part_1_bow.pdf), [Problem statement for part 2](computer-vision-1/Lab5_Project/FinalProject_part_2_cnn.pdf) and [Solution](computer-vision-1/Lab5_Project/report/hw5.pdf)
 
 <p align="center">
-  <img src="https://cdn.pbrd.co/images/HZKChIE.png" width="650" /><br />
+  <img src="https://lh3.googleusercontent.com/9OcWL2VlhZHsX8WXWOMsEiBsMSXOAzyupzmP4_cGFGaT4h-tvBx4NgzVLgJjYOZDMLse-QtL3wjCIR0UetO6Knlc7Amu5n3rGFxUc8RS3GgyUE6Ls0R2slxYfuDXMY89lg4x1v5FSjc=w2400" width="650" /><br />
   <i>Performance of Bag-of-Words model</i>
 </p>
 
 <p align="center">
-  <img src="https://cdn.pbrd.co/images/HZKCSea.png" width="650" /><br />
+  <img src="https://lh3.googleusercontent.com/phxV_BQjdtHHjcVVmDvUP_ShyHwaN728sHAcZ2xCWKa9o_4Fob33ADbOPoQGWntAu8nbjovuLk9UxUeiUZJHqyuqC5A6pkkirLG3k0kp2L5zVMm9d27fa4Rqfb9bJQsikU4qtic9HTE=w2400" width="650" /><br />
   <i>T-SNE Visualizations of CNN model features</i>
 </p>
 
@@ -78,7 +78,7 @@ Labs and presentation of the [Computer Vision 1](http://coursecatalogue.uva.nl/x
 [Problem statement](computer-vision-2/assignments/assignment_1/lab1.pdf) and [Solution](computer-vision-2/assignments/assignment_1/lab1-sol.pdf)
 
 <p align="center">
-  <img src="https://cdn.pbrd.co/images/HZL0LBH.png" width="800" /><br />
+  <img src="https://lh3.googleusercontent.com/CaENLrqo5YQG347erTlL3KbN0fju669tAkxIYidbTediq7F91w6NfnwmEOO3E7pqvkpk5WpmSPjZSnD0MaYY8CEwAURzL0oiiH5PdHefEafFapNaimgvTYGSpgZEqurelm7e9bz1gQI=w2400" width="800" /><br />
   <i>Result of Scene Merging</i>
 </p>
 
@@ -88,11 +88,11 @@ Labs and presentation of the [Computer Vision 1](http://coursecatalogue.uva.nl/x
 
 Feature Matching             |  Point-View Matrices
 :-------------------------:|:-------------------------:
-<img src="https://cdn.pbrd.co/images/HZKVcen.png" width="400"/>  |  <img src="https://cdn.pbrd.co/images/HZKVHYY.png" width="400"/>
+<img src="https://lh3.googleusercontent.com/dcJuDby80eCkk6EYFo6LuS6mG0VcCW9rgzPpK69DhZwMdYqi3WIwJ_rFenBFuRKulhEmrrGjFYoFWWaWe8JYgO7HDj2j-dDzr9N6fH8Mw53tz0SMm6J4aNCHpp9Y5BssxyT56N9jwrA=w2400" width="400"/>  |  <img src="https://lh3.googleusercontent.com/KE2rIYe2G1T8phYBg0QWXh0mLV_WkH-9ZuvcV_CRNWa-W52nlOkUvXR9zU1nLUSFsXLvpxjVZhumCRqM_1ZBircwPmdGl4pvnfDLlsXziootxQ_C6bGue16Ep4XLXbvEK_C7dcPk_SY=w2400" width="400"/>
 
 
 <p align="center">
-  <img src="https://cdn.pbrd.co/images/HZKWS6W.png" width="400" /><br />
+  <img src="https://lh3.googleusercontent.com/i1stN__IhVEZjDNZzCIPxoeA0SFPs7H4E8V2yzBSy0hDi96-1MLT8Rvb-mM_OTKQMMroVGONXd3OSPXNkYZTbX5fpaxgOZ_Kmn_1S037BU1Xmpbn8yFHQ8aiaihpr-jVQppUTKXAPbU=w2400" width="400" /><br />
   <i>Result of the Structure from Motion algorithm</i>
 </p>
 
@@ -100,7 +100,7 @@ Feature Matching             |  Point-View Matrices
 [Problem statement](computer-vision-2/assignments/assignment_3/lab3.pdf) and [Solution](computer-vision-2/assignments/assignment_3/lab3-sol.pdf)
 
 <p align="center">
-  <img src="https://cdn.pbrd.co/images/HZKTMM0.png" width="400" /><br />
+  <img src="https://lh3.googleusercontent.com/6DMPCR6LEjZTH2bmjyLC2_eyDwiwfCfR5nmqRb249eGAs-MGprfjTU1gcB1oh_WIGXCb_Z-UjF-ce4hAytqxXziWglU-NC3Pie8Lwha-D-FHaNWaOwyXo0diSmB8VdoLcOS_oTx-adw=w2400" width="400" /><br />
   <i> Reconstruction using Poisson with texture </i>
 </p>
 
